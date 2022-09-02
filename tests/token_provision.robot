@@ -16,6 +16,7 @@ Resource    ../keywords.robot
 TOP001.001 Token provisioning
     [Documentation]    Checks that API command admin/token_provision works
     ...                correctly.
+    [Teardown]    Run Keyword If Test Failed    Set Suite Variable    ${prev_test_status}    FAIL
     Run    python3 provisioning/cc_cbor.py provisioning/chain.pem provisioning/tmp/fobnail.cbor
     Run    coap-client -t application/cbor -m post -f provisioning/tmp/fobnail.cbor coap://169.254.0.1/api/v1/admin/token_provision > provisioning/tmp/fobnail.csr
     SSHLibrary.Read Until    Certificate chain loaded
@@ -24,6 +25,7 @@ TOP001.001 Token provisioning
 TOP002.001 Provisioning complete
     [Documentation]    Checks that API command admin/token_provision works
     ...                correctly.
+    IF   '${prev_test_status}'=='FAIL'    FAIL    Provisioning failed
     Generate Certificates
     Run    coap-client -m post -f provisioning/tmp/fobnail.crt coap://169.254.0.1/api/v1/admin/provision_complete
     SSHLibrary.Read Until    Token provisioning complete
