@@ -1,0 +1,6 @@
+git+https://github.com/3mdeb/robotframework
+robotframework-sshlibrary==3.5.1
+robotframework-requests==0.7.1
+cbor==1.0.0
+pem==21.2.0
+hexdump==3.3
