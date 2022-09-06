@@ -2,7 +2,7 @@
 
 Open Server
     [Documentation]    Connect with device to run and build server on it.
-    SSHLibrary.Open Connection    ${server_ip}    prompt=~$
+    SSHLibrary.Open Connection    ${server_device_ip}    prompt=~$
     SSHLibrary.Set Client Configuration    timeout=90s
     SSHLibrary.Login    ${server_device_username}    ${server_device_password}
     SSHLibrary.Write    cd ${fobnail_path}
