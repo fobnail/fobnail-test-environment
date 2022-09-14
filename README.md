@@ -13,14 +13,10 @@
     pip install -U -r requirements.txt
     ```
 
-1. Set the appropriate variables according to your configuration in the
-    `variables.robot` file:
+1. Set the absolute Fobnail path on your device in the `variables.robot` file:
     
     ```bash
-    ${server_device_ip}                    192.168.192.168
-    ${server_device_username}              user
-    ${server_device_password}              password
-    ${fobnail_path}                        /home/user/fobnail
+    ${absolute_fobnail_path}                        /home/user/fobnail
     ```
 
 1. Running test cases example:
