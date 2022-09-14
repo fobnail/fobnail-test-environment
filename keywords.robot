@@ -2,14 +2,20 @@
 
 Open Server
     [Documentation]    Connect with device to run and build server on it.
-    SSHLibrary.Open Connection    ${server_device_ip}    prompt=~$
-    SSHLibrary.Set Client Configuration    timeout=90s
-    SSHLibrary.Login    ${server_device_username}    ${server_device_password}
-    SSHLibrary.Write    cd ${fobnail_path}
-    SSHLibrary.Write    export FOBNAIL_PO_ROOT=root.crt
-    SSHLibrary.Write    export FOBNAIL_LOG=debug
-    SSHLibrary.Write    ./build.sh --run
-    SSHLibrary.Read Until    Hello from main
+    Run    cd ${absolute_fobnail_path} && mkdir .temp
+    Run    cp provisioning/fobnail_test_root.crt ${absolute_fobnail_path}/.temp
+    Run    cp provisioning/export.sh ${absolute_fobnail_path}
+    # ${output}=    Run process    ./build.sh    env:FOBNAIL_PO_ROOT=.temp/fobnail_test_root.crt    env:FOBNAIL_LOG=debug    cwd=${absolute_fobnail_path}    shell=True
+    # Should Be Equal As Integers    ${output.rc}    0
+    ${output}=    Run    cd ${absolute_fobnail_path} && chmod +x export.sh && ./export.sh
+    Should Contain    ${output}    Finished
+    Start Process    ./export.sh --run    cwd=${absolute_fobnail_path}    shell=True    stdout=stdout.txt    stderr=stderr.txt
+    Sleep    15s
+
+Remove Transferred Files
+    [Documentation]    Deleting transferred files from Fobnail repository.
+    Run    cd ${absolute_fobnail_path}/.temp && rm fobnail_test_root.crt
+    Run    cd ${absolute_fobnail_path} && rm export.sh
 
 Generate Certificates
     [Documentation]    Generates certificates.
