@@ -6,7 +6,7 @@ Library     RequestsLibrary
 Library     Collections
 
 Suite Setup       Run Keyword    Open Server
-Suite Teardown    Run Keyword    Remove Transferred Files
+Suite Teardown    Run Keyword    Restore Initial State Of Server
 
 Resource    ../variables.robot
 Resource    ../keywords.robot

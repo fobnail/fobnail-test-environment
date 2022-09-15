@@ -10,9 +10,11 @@ Open Server
     Should Be Equal As Integers    ${output.rc}    0
     Start process    ./build.sh --run    env:CI=true    env:FOBNAIL_PO_ROOT=.temp/fobnail_test_root.crt    env:FOBNAIL_LOG=debug    cwd=${absolute_fobnail_path}    shell=True
 
-Remove Transferred Files
+Restore Initial State Of Server
     [Documentation]    Deleting transferred files from Fobnail repository.
+    Terminate All Processes
     Run    cd ${absolute_fobnail_path}/.temp && rm fobnail_test_root.crt
+    Run    cd ${absolute_fobnail_path}/target && rm flash.bin
 
 Generate Certificates
     [Documentation]    Generates certificates.
