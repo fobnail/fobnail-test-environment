@@ -3,3 +3,5 @@ provisioning/tmp/*
 *.xml
 *.html
 *.log
+*.pyc
+*.srl
