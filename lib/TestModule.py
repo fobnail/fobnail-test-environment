@@ -7,6 +7,7 @@ import pem
 import hexdump
 
 class TestModule(object):
+    ROBOT_LIBRARY_VERSION = '1.0.0'
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
     
     def convert_pem_to_cbor(self, input_file, output_file):

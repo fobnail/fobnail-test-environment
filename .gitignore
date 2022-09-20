@@ -1,7 +1,8 @@
 robot-venv
 provisioning/tmp/*
+provisioning/*.srl
 *.xml
 *.html
 *.log
 *.pyc
-*.srl
+*.robot
