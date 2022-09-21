@@ -4,7 +4,6 @@ Library     OperatingSystem
 Library     String
 Library     RequestsLibrary
 Library     Collections
-Library     ../lib/TestModule.py
 
 Suite Setup       Run Keyword    Open Server
 Suite Teardown    Run Keyword    Restore Initial State Of Server
@@ -18,7 +17,7 @@ TOP001.001 Token provisioning
     [Documentation]    Checks that API command admin/token_provision works
     ...                correctly.
     [Teardown]    Run Keyword If Test Failed    Set Suite Variable    ${prev_test_status}    FAIL
-    Convert Pem To Cbor    ${pem}    ${cbor}
+    Run    python3 provisioning/cc_cbor.py provisioning/chain.pem provisioning/tmp/fobnail.cbor
     ${output}=    Run    coap-client -v 9 -t application/cbor -m post -f provisioning/tmp/fobnail.cbor coap://${fobnail_ip}/api/v1/admin/token_provision -o provisioning/tmp/fobnail.csr
     Should Contain    ${output}    process incoming 2.01 response
 
