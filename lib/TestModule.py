@@ -11,15 +11,14 @@ from logging import error, info
 import asyncio
 import logging
 import cbor
-import cbor2
 import subprocess
 
 logging.basicConfig(level=logging.INFO)
 BASE_URI = 'coap://169.254.0.1/api/v1'
 
-requests = { # endpoint, method, result_code, output
-    '/admin/token_provision':[Code.POST, 2.01, 'csr'],
-    '/admin/provision_complete':[Code.POST, 2.01, None]
+requests = { # endpoint, method, input, output
+    '/admin/token_provision':{'method': Code.POST,'in': 'cbor','out': 'csr'},
+    '/admin/provision_complete':{'method': Code.POST,'in': 'csr','out': None}
 }
 
 class TestModule(object):
@@ -47,16 +46,24 @@ class TestModule(object):
 
     async def send_data(self, endpoint, argument):
         proto = await Context.create_client_context()
-        with open(argument, 'rb') as cbor_in:
-            payload = cbor2.load(cbor_in)
+
+        if requests[endpoint]['in'] == 'cbor':
+            payload = open(argument, 'rb').read()
+            if not isinstance(payload, bytes):
+                payload = cbor.dumps(payload)
+        else:
+            payload = open(argument, 'rb').read()
+        
         try:
-            request = Message(code=requests[endpoint][0], uri=f'{BASE_URI}{endpoint}', payload=payload)
+            request = Message(code=requests[endpoint]['method'], uri=f'{BASE_URI}{endpoint}', payload=payload)
+            if requests[endpoint]['in'] == 'cbor':
+                request.opt.content_format = ContentFormat.CBOR
             r: Message = await proto.request(request).response
-            print(r.code)
-            if r.code != requests[endpoint][1]:
+            if r.code != Code.CREATED:
                 raise RuntimeError(f'Request failed with error {r.code}')
-            if requests[endpoint][2] == 'csr':
-                pass
+            if requests[endpoint]['out'] == 'csr':
+                with open('provisioning/tmp/fobnail.csr', 'w+b') as out:
+                    out.write(r.payload)
         except NetworkError:
             pass
         except RuntimeError as ex:
