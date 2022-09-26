@@ -15,17 +15,18 @@ import subprocess
 
 logging.basicConfig(level=logging.INFO)
 BASE_URI = 'coap://169.254.0.1/api/v1'
+proto = None
 
 requests = { # endpoint, method, input, output
     '/admin/token_provision':{'method': Code.POST,'in': 'cbor','out': 'csr'},
-    '/admin/provision_complete':{'method': Code.POST,'in': 'csr','out': None}
+    '/admin/provision_complete':{'method': Code.POST,'in': 'crt','out': None}
 }
 
 class TestModule(object):
     ROBOT_LIBRARY_VERSION = '1.0.0'
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
-    
-    def convert_pem_to_cbor(self, input_file, output_file):
+
+    def convert_pem_to_cbor(self, input_file):
 
         chain = pem.parse_file(input_file)
         cert = []
@@ -38,21 +39,15 @@ class TestModule(object):
             'certs': cert
         })
 
-        with open(output_file, 'wb') as out:
-            out.write(encoded)
-            out.close()
-
         # hexdump.hexdump(encoded)
 
-    async def send_data(self, endpoint, argument):
+        return encoded
+
+    async def send_data(self, endpoint, payload):
         proto = await Context.create_client_context()
 
-        if requests[endpoint]['in'] == 'cbor':
-            payload = open(argument, 'rb').read()
-            if not isinstance(payload, bytes):
-                payload = cbor.dumps(payload)
-        else:
-            payload = open(argument, 'rb').read()
+        if requests[endpoint]['in'] == 'crt':
+            payload = open(payload, 'rb').read()
         
         try:
             request = Message(code=requests[endpoint]['method'], uri=f'{BASE_URI}{endpoint}', payload=payload)
@@ -62,9 +57,15 @@ class TestModule(object):
             if r.code != Code.CREATED:
                 raise RuntimeError(f'Request failed with error {r.code}')
             if requests[endpoint]['out'] == 'csr':
-                with open('provisioning/tmp/fobnail.csr', 'w+b') as out:
+                with open('provisioning/fobnail.csr', 'w+b') as out:
                     out.write(r.payload)
+                    out.close()
+                # return r.payload
         except NetworkError:
             pass
         except RuntimeError as ex:
             error(ex)
+    
+    # async def __init__(self):
+
+    #     proto = await Context.create_client_context()
