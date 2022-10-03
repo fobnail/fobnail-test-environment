@@ -11,6 +11,7 @@ from logging import error, info
 import asyncio
 import logging
 import cbor
+from threading import Thread
 import subprocess
 
 logging.basicConfig(level=logging.INFO)
@@ -43,29 +44,37 @@ class TestModule(object):
 
         return encoded
 
-    async def send_data(self, endpoint, payload):
-        proto = await Context.create_client_context()
+    def send_data(self, endpoint, payload):
 
-        if requests[endpoint]['in'] == 'crt':
-            payload = open(payload, 'rb').read()
+        async def send_data_async(endpoint, payload):
+
+            proto = await Context.create_client_context()
+
+            if requests[endpoint]['in'] == 'crt':
+                payload = open(payload, 'rb').read()
+
+            try:
+                request = Message(code=requests[endpoint]['method'], uri=f'{BASE_URI}{endpoint}', payload=payload)
+                if requests[endpoint]['in'] == 'cbor':
+                    request.opt.content_format = ContentFormat.CBOR
+                r: Message = await proto.request(request).response
+                if r.code != Code.CREATED:
+                    raise RuntimeError(f'Request failed with error {r.code}')
+                if requests[endpoint]['out'] == 'csr':
+                    with open('provisioning/fobnail.csr', 'w+b') as out:
+                        out.write(r.payload)
+                        out.close()
+            except NetworkError:
+                pass
+            except RuntimeError as ex:
+                error(ex)
+
+        async def handler(endpoint, payload):
+             await send_data_async(endpoint, payload)
         
-        try:
-            request = Message(code=requests[endpoint]['method'], uri=f'{BASE_URI}{endpoint}', payload=payload)
-            if requests[endpoint]['in'] == 'cbor':
-                request.opt.content_format = ContentFormat.CBOR
-            r: Message = await proto.request(request).response
-            if r.code != Code.CREATED:
-                raise RuntimeError(f'Request failed with error {r.code}')
-            if requests[endpoint]['out'] == 'csr':
-                with open('provisioning/fobnail.csr', 'w+b') as out:
-                    out.write(r.payload)
-                    out.close()
-                # return r.payload
-        except NetworkError:
-            pass
-        except RuntimeError as ex:
-            error(ex)
-    
-    # async def __init__(self):
+        def handler(func):
+            t = Thread(target=lambda: asyncio.run(func))
+            t.start()
+            t.join()
 
-    #     proto = await Context.create_client_context()
+        handler(send_data_async(endpoint, payload))
