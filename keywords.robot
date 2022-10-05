@@ -16,5 +16,5 @@ Restore Initial State Of Server
 
 Generate Certificates
     [Documentation]    Generates certificates.
-    Run    openssl req -inform der -in ${csr} > provisioning/tmp/fobnail.pem
+    Run    openssl req -inform der -in provisioning/fobnail.csr > provisioning/tmp/fobnail.pem
     Run    openssl x509 -req -in provisioning/tmp/fobnail.pem -days 3600 -CA provisioning/ca2.crt -CAkey provisioning/ca2.priv -CAcreateserial -extfile provisioning/leaf.ext -outform der -out provisioning/tmp/fobnail.crt
