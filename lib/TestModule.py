@@ -18,10 +18,11 @@ logging.basicConfig(level=logging.INFO)
 BASE_URI = 'coap://169.254.0.1/api/v1'
 proto = None
 
-requests = { # endpoint, method, input, output
-    '/admin/token_provision':{'method': Code.POST,'in': 'cbor','out': 'csr'},
-    '/admin/provision_complete':{'method': Code.POST,'in': 'crt','out': None}
+requests = {  # endpoint, method, input, output
+    '/admin/token_provision': {'method': Code.POST, 'in': 'cbor', 'out': 'csr'},
+    '/admin/provision_complete': {'method': Code.POST, 'in': 'crt', 'out': None}
 }
+
 
 class TestModule(object):
     ROBOT_LIBRARY_VERSION = '1.0.0'
@@ -53,28 +54,21 @@ class TestModule(object):
             if requests[endpoint]['in'] == 'crt':
                 payload = open(payload, 'rb').read()
 
-            try:
-                request = Message(code=requests[endpoint]['method'], uri=f'{BASE_URI}{endpoint}', payload=payload)
-                if requests[endpoint]['in'] == 'cbor':
-                    request.opt.content_format = ContentFormat.CBOR
-                r: Message = await proto.request(request).response
-                if r.code != Code.CREATED:
-                    raise RuntimeError(f'Request failed with error {r.code}')
-                if requests[endpoint]['out'] == 'csr':
-                    with open('provisioning/fobnail.csr', 'w+b') as out:
-                        out.write(r.payload)
-                        out.close()
-            except NetworkError:
-                pass
-            except RuntimeError as ex:
-                error(ex)
+            request = Message(
+                code=requests[endpoint]['method'], uri=f'{BASE_URI}{endpoint}', payload=payload)
+            if requests[endpoint]['in'] == 'cbor':
+                request.opt.content_format = ContentFormat.CBOR
+            r: Message = await proto.request(request).response
 
-        async def handler(endpoint, payload):
-             await send_data_async(endpoint, payload)
-        
+            if r.code != Code.CREATED:
+                raise RuntimeError(f'Request failed with error {r.code}')
+
+            if requests[endpoint]['out'] == 'csr':
+                with open('provisioning/fobnail.csr', 'w+b') as out:
+                    out.write(r.payload)
+                    out.close()
+
         def handler(func):
-            t = Thread(target=lambda: asyncio.run(func))
-            t.start()
-            t.join()
+            return asyncio.run(func)
 
         handler(send_data_async(endpoint, payload))
